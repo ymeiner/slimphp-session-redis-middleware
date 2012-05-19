@@ -22,6 +22,10 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	// stores redis object
 	protected $redis;
 
+
+	// session name
+	protected $session_name;
+	
 	protected $session_stat = array();
 
 	/**
@@ -52,6 +56,10 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 
 		// cookies blah!
 		session_name($this->settings['name']);
+		
+		$this->session_name = session_name();
+		
+		
 		session_set_cookie_params(
 			$this->settings['cookie.lifetime'],
 			$this->settings['cookie.path'],
@@ -69,7 +77,6 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 			array($this, 'destroy'),
 			array($this, 'gc')
 		);
-		register_shutdown_function('session_write_close');
 	}
 
 	/**
@@ -127,15 +134,15 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	 */
 	public function read( $session_id )
 	{
-		$key = session_name().":".$session_id;
+		$key = "{$this->session_name}:{$session_id}";
 
-		$sess_data = $this->redis->get($key);
-		if ( $sess_data === NULL ) {}
+		$session_data = $this->redis->get($key);
+		if ( $session_data === NULL ) {
 			return "";
 		}
-		$this->redis->session_stat[$key] = md5($sess_data);
+		$this->redis->session_stat[$key] = md5($session_data);
 	
-		return $sess_data;
+		return $session_data;
 	}
 
 	/**
@@ -147,8 +154,8 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	 */
 	public function write( $session_id, $session_data )
 	{
-		$key = session_name().":".$session_id;
-		$lifetime = $this->settings['expires'];//ini_get("session.gc_maxlifetime");
+		$key = "{$this->session_name}:{$session_id}";
+		$lifetime = $this->settings['expires']; //ini_get("session.gc_maxlifetime");
 
 		//check if anything changed in the session, only send if has changed
 		if ( !empty($this->redis->session_stat[$key]) && $this->redis->session_stat[$key] == md5($session_data) ) {
@@ -169,7 +176,7 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	 */
 	public function destroy( $session_id )
 	{
-		$this->redis->delete(session_name().":".$session_id);
+		$this->redis->delete("{$this->session_name}:{$session_id}");
 		return true;
 	}
 
