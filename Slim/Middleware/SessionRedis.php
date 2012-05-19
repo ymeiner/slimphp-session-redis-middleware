@@ -12,7 +12,7 @@
  * @author   importlogic
  * @author   manuks
  * @depends  phpredis(https://github.com/nicolasff/phpredis)
- * @version  0.1
+ * @version  0.3
  */
 class Slim_Middleware_SessionRedis extends Slim_Middleware
 {
