@@ -21,10 +21,6 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 
 	// stores redis object
 	protected $redis;
-
-
-	// session name
-	protected $session_name;
 	
 	protected $session_stat = array();
 
@@ -40,24 +36,22 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	{
 		// A neat way of doing setting initialization with default values
 		$this->settings = array_merge(array(
-			'expires'		=> ini_get('session.gc_maxlifetime'),
-			'name'			=> 'slim_session',
+			'session.name'		=> 'slim_session',
+			'session.id'		=> '',
+			'session.expires'		=> ini_get('session.gc_maxlifetime'),
 			'cookie.lifetime'	=> 0,
 			'cookie.path'		=> '/',
 			'cookie.domain'		=> '',
 			'cookie.secure'		=> false,
 			'cookie.httponly'	=> true,
-			'sessionid'		=> ''
 		), $settings);
 
 		// if the setting for the expire is a string convert it to an int
-		if ( is_string($this->settings['expires']) )
-			$this->settings['expires'] = intval($this->settings['expires']);
+		if ( is_string($this->settings['session.expires']) )
+			$this->settings['session.expires'] = intval($this->settings['session.expires']);
 
 		// cookies blah!
-		session_name($this->settings['name']);
-		
-		$this->session_name = session_name();
+		session_name($this->settings['session.name']);
 		
 		
 		session_set_cookie_params(
@@ -89,7 +83,7 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	public function call()
 	{
 
-		session_id($this->settings['sessionid']);
+		session_id($this->settings['session.id']);
 
 		// start our session
 		session_start();
@@ -109,7 +103,6 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 		$this->redis = new Redis();
 		$this->redis->pconnect('127.0.0.1', 6379, 2);
 		//$this->redis->select($session_name);
-		
 		return true;
 	}
 
@@ -134,7 +127,7 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	 */
 	public function read( $session_id )
 	{
-		$key = "{$this->session_name}:{$session_id}";
+		$key = "{$this->settings['session.name']}:{$session_id}";
 
 		$session_data = $this->redis->get($key);
 		if ( $session_data === NULL ) {
@@ -154,8 +147,8 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	 */
 	public function write( $session_id, $session_data )
 	{
-		$key = "{$this->session_name}:{$session_id}";
-		$lifetime = $this->settings['expires']; //ini_get("session.gc_maxlifetime");
+		$key = "{$this->settings['session.name']}:{$session_id}";
+		$lifetime = $this->settings['session.expires'];
 
 		//check if anything changed in the session, only send if has changed
 		if ( !empty($this->redis->session_stat[$key]) && $this->redis->session_stat[$key] == md5($session_data) ) {
@@ -176,7 +169,7 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	 */
 	public function destroy( $session_id )
 	{
-		$this->redis->delete("{$this->session_name}:{$session_id}");
+		$this->redis->delete("{$this->settings['session.name']}:{$session_id}");
 		return true;
 	}
 
