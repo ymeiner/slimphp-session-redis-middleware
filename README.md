@@ -8,9 +8,9 @@ use
 
 ```php
 $app->add($session = new Slim_Middleware_SessionRedis(array(
-	'expires' => 3600,
-	'sessionid' => $_COOKIE['session_cookie_name'],
-	'name' => 'session_cookie_name'
+	'session.expires'	=> 3600,
+	'session.id'		=> $_COOKIE['session_cookie_name'],
+	'session.name'		=> 'session_cookie_name'
 )));
 
 $app->get('/', function()
