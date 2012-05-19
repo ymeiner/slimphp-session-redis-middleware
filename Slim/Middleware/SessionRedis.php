@@ -130,8 +130,7 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 		$key = session_name().":".$session_id;
 
 		$sess_data = $this->redis->get($key);
-		if ($sess_data === NULL)
-		{
+		if ( $sess_data === NULL ) {}
 			return "";
 		}
 		$this->redis->session_stat[$key] = md5($sess_data);
@@ -152,7 +151,7 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 		$lifetime = $this->settings['expires'];//ini_get("session.gc_maxlifetime");
 
 		//check if anything changed in the session, only send if has changed
-		if (!empty($this->redis->session_stat[$key]) && $this->redis->session_stat[$key] == md5($session_data)) {
+		if ( !empty($this->redis->session_stat[$key]) && $this->redis->session_stat[$key] == md5($session_data) ) {
 			//just sending EXPIRE should save a lot of bandwidth!
 			$this->redis->setTimeout($key, $lifetime);
 		} else {
