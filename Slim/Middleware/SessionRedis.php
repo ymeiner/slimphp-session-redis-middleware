@@ -38,12 +38,12 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 		$this->settings = array_merge(array(
 			'session.name'		=> 'slim_session',
 			'session.id'		=> '',
-			'session.expires'		=> ini_get('session.gc_maxlifetime'),
+			'session.expires'	=> ini_get('session.gc_maxlifetime'),
 			'cookie.lifetime'	=> 0,
 			'cookie.path'		=> '/',
 			'cookie.domain'		=> '',
 			'cookie.secure'		=> false,
-			'cookie.httponly'	=> true,
+			'cookie.httponly'	=> true
 		), $settings);
 
 		// if the setting for the expire is a string convert it to an int
