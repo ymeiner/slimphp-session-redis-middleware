@@ -10,6 +10,7 @@
  *
  * @package  Slim
  * @author   importlogic
+ * @author   manuks
  * @depends  phpredis(https://github.com/nicolasff/phpredis)
  * @version  0.1
  */
