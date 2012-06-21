@@ -6,7 +6,6 @@
  * memory data storage.
  *
  * This is still in it's early stages so it doesn't do much beyond basic functionality
- * nor does it perform garbage collection, yet.
  *
  * @package  Slim
  * @author   importlogic
@@ -176,13 +175,11 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	/**
 	 * gc
 	 *
-	 * @return true
+	 * garbage collection is performed using redis' internal timeout mechanism
+	 *
+	 * @return void
 	 */
-	public function gc()
-	{
-		// Take out the trash
-		return true;
-	}
+	public function gc(){}
 
 	/**
 	 * Destructor
