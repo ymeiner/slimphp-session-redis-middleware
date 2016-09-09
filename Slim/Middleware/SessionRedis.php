@@ -35,6 +35,9 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	{
 		// A neat way of doing setting initialization with default values
 		$this->settings = array_merge(array(
+			'redis.host'		=> '127.0.0.1',
+			'redis.port'		=> 6379,
+			'redis.timeout'		=> 2,
 			'session.name'		=> 'slim_session',
 			'session.id'		=> '',
 			'session.expires'	=> ini_get('session.gc_maxlifetime'),
@@ -100,7 +103,7 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	public function open( $session_path, $session_name )
 	{
 		$this->redis = new Redis();
-		$this->redis->pconnect('127.0.0.1', 6379, 2);
+		$this->redis->pconnect($this->settings['redis.host'], $this->settings['redis.port'], $this->settings['redis.timeout']);
 		//$this->redis->select($session_name);
 		return true;
 	}
