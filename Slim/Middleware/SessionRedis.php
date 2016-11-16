@@ -9,15 +9,15 @@
  *
  * @package  Slim
  * @author   importlogic
- * @author   manuks
  * @depends  phpredis(https://github.com/nicolasff/phpredis)
- * @version  0.3
+ * @version  0.5
+ * @commiter manuks
+ * @commiter jangsoopark(wkdtn8211@gmail.com)
  */
-class Slim_Middleware_SessionRedis extends Slim_Middleware
+class Slim_Middleware_SessionRedis
 {
 	// stores settings
 	protected $settings;
-
 	// stores redis object
 	protected $redis;
 	
@@ -35,23 +35,18 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	{
 		// A neat way of doing setting initialization with default values
 		$this->settings = array_merge(array(
-			'redis.host'		=> '127.0.0.1',
-			'redis.port'		=> 6379,
-			'redis.timeout'		=> 2,
 			'session.name'		=> 'slim_session',
 			'session.id'		=> '',
 			'session.expires'	=> ini_get('session.gc_maxlifetime'),
-			'cookie.lifetime'	=> 0,
+			'cookie.lifetime'	=> 43200,
 			'cookie.path'		=> '/',
 			'cookie.domain'		=> '',
 			'cookie.secure'		=> false,
-			'cookie.httponly'	=> true
+			'cookie.httponly'	=> true,
 		), $settings);
-
 		// if the setting for the expire is a string convert it to an int
 		if ( is_string($this->settings['session.expires']) )
 			$this->settings['session.expires'] = intval($this->settings['session.expires']);
-
 		// cookies blah!
 		session_name($this->settings['session.name']);
 		
@@ -63,7 +58,6 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 			$this->settings['cookie.secure'],
 			$this->settings['cookie.httponly']
 		);
-
 		// overwrite the default session handler to use this classes methods instead
 		session_set_save_handler(
 			array($this, 'open'),
@@ -76,21 +70,25 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	}
 
 	/**
-	 * call
+	 * __invoke
 	 *
-	 * slim imposed method, must call $this->next->call() or the middleware will stop in its tracks
+	 * slim imposed method, must call $this->next->__invoke() or the middleware will stop in its tracks
 	 *
+	 * TODO: Desribe @param $request, $response, $next
 	 * @return void
 	 */
-	public function call()
-	{
-
-		session_id($this->settings['session.id']);
-
+	public function __invoke($request, $response, $next)
+	{		
+		//Test
+		if (!empty($this->settings['session.id']))	session_id($this->settings['session.id']);
+		//real
+		//if (!empty($this->settings['session.id']))	{echo "No recommand"; exit;}
 		// start our session
 		session_start();
 		// tell slim it's ok to continue!
-		$this->next->call();
+		$response = $next($request, $response);
+		
+		return $response;
 	}
 
 	/**
@@ -103,7 +101,8 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	public function open( $session_path, $session_name )
 	{
 		$this->redis = new Redis();
-		$this->redis->pconnect($this->settings['redis.host'], $this->settings['redis.port'], $this->settings['redis.timeout']);
+		$this->redis->connect('127.0.0.1', 6379);
+		$this->redis->auth('1234');
 		//$this->redis->select($session_name);
 		return true;
 	}
@@ -119,7 +118,6 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 		return true;
 	}
 
-
 	/**
 	 * read
 	 *
@@ -130,12 +128,11 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	public function read( $session_id )
 	{
 		$key = "{$this->settings['session.name']}:{$session_id}";
-
 		$session_data = $this->redis->get($key);
 		if ( $session_data === NULL ) {
 			return "";
 		}
-		$this->session_stat[$key] = md5($session_data);
+		$this->redis->session_stat[$key] = md5($session_data);
 	
 		return $session_data;
 	}
@@ -145,21 +142,19 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	 *
 	 * writes session data
 	 *
-	 * @return True|False
+	 * @return void
 	 */
 	public function write( $session_id, $session_data )
 	{
 		$key = "{$this->settings['session.name']}:{$session_id}";
 		$lifetime = $this->settings['session.expires'];
-
 		//check if anything changed in the session, only send if has changed
-		if ( !empty($this->session_stat[$key]) && $this->session_stat[$key] == md5($session_data) ) {
+		if ( !empty($this->redis->session_stat[$key]) && $this->redis->session_stat[$key] == md5($session_data) ) {
 			//just sending EXPIRE should save a lot of bandwidth!
-			$this->redis->setTimeout($key, $lifetime);
+				$this->redis->setTimeout($key, $lifetime);
 		} else {
 			$this->redis->setex($key, $lifetime, $session_data);
 		}
-
 	}
 
 	/**
@@ -176,6 +171,35 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	}
 
 	/**
+	 * getRedis
+	 *
+	 * get instance of Redis
+	 *
+	 * @return Object
+	 */
+	public function getRedis()
+	{
+		return $this->redis;
+	}
+	
+	/**
+	 * setSessionExp
+	 *
+	 * Sets expirary for redis session
+	 *
+	 * @return void
+	 */
+	public function setSessionExp($expire_time)
+	{
+		$this->settings['session.expires'] = $expire_time;
+		if ( is_string($this->settings['session.expires']) )
+			$this->settings['session.expires'] = intval($this->settings['session.expires']);
+		session_set_cookie_params(
+			$this->settings['cookie.lifetime']
+		);	
+	}
+
+	/**
 	 * gc
 	 *
 	 * garbage collection is performed using redis' internal timeout mechanism
@@ -187,13 +211,13 @@ class Slim_Middleware_SessionRedis extends Slim_Middleware
 	/**
 	 * Destructor
 	 *
-	 * do things
+	 * close our session
 	 *
 	 * @return void
 	 */
 	public function __destruct()
 	{
-		session_write_close();
+		@session_write_close();
 	}
 }
 ?>
