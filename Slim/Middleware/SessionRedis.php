@@ -8,7 +8,7 @@
  * This is still in it's early stages so it doesn't do much beyond basic functionality
  *
  * @package  Slim
- * @author   importlogic
+ * @author   dostoevskylabs
  * @depends  phpredis(https://github.com/nicolasff/phpredis)
  * @version  0.5
  * @commiter manuks
