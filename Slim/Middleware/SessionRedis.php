@@ -129,7 +129,7 @@ class Slim_Middleware_SessionRedis
 	{
 		$key = "{$this->settings['session.name']}:{$session_id}";
 		$session_data = $this->redis->get($key);
-		if ( $session_data === NULL ) {
+		if ( $session_data === NULL || !session_data ) {
 			return "";
 		}
 		$this->redis->session_stat[$key] = md5($session_data);
