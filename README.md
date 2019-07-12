@@ -3,6 +3,8 @@ slimphp-redis-session-middleware
 
 Middleware to use Redis as your PHP Session store in SlimPHP
 
+This fork fits php7.2.
+
 use
 ================================
 
@@ -19,3 +21,6 @@ use ($app, $session){
 	$_SESSION['key'] = 'value';
 });
 ```
+Remark
+==============
+Looks like this fork is the only one being maintained. Open for new ideas to improve!
