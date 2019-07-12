@@ -20,7 +20,7 @@ class Slim_Middleware_SessionRedis
 	protected $settings;
 	// stores redis object
 	protected $redis;
-	
+
 	protected $session_stat = array();
 
 	/**
@@ -49,8 +49,8 @@ class Slim_Middleware_SessionRedis
 			$this->settings['session.expires'] = intval($this->settings['session.expires']);
 		// cookies blah!
 		session_name($this->settings['session.name']);
-		
-		
+
+
 		session_set_cookie_params(
 			$this->settings['cookie.lifetime'],
 			$this->settings['cookie.path'],
@@ -78,7 +78,7 @@ class Slim_Middleware_SessionRedis
 	 * @return void
 	 */
 	public function __invoke($request, $response, $next)
-	{		
+	{
 		//Test
 		if (!empty($this->settings['session.id']))	session_id($this->settings['session.id']);
 		//real
@@ -87,7 +87,7 @@ class Slim_Middleware_SessionRedis
 		session_start();
 		// tell slim it's ok to continue!
 		$response = $next($request, $response);
-		
+
 		return $response;
 	}
 
@@ -129,11 +129,11 @@ class Slim_Middleware_SessionRedis
 	{
 		$key = "{$this->settings['session.name']}:{$session_id}";
 		$session_data = $this->redis->get($key);
-		if ( $session_data === NULL ) {
+		if ( $session_data === NULL || !$session_data ) {
 			return "";
 		}
 		$this->redis->session_stat[$key] = md5($session_data);
-	
+
 		return $session_data;
 	}
 
@@ -181,7 +181,7 @@ class Slim_Middleware_SessionRedis
 	{
 		return $this->redis;
 	}
-	
+
 	/**
 	 * setSessionExp
 	 *
@@ -196,7 +196,7 @@ class Slim_Middleware_SessionRedis
 			$this->settings['session.expires'] = intval($this->settings['session.expires']);
 		session_set_cookie_params(
 			$this->settings['cookie.lifetime']
-		);	
+		);
 	}
 
 	/**
